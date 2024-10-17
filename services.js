@@ -100,8 +100,15 @@ class FileManagementService {
     if (!filemeta) {
       throw new Error("This file does not exist.");
     }
-    const savedFilePath = path.join(this.uploadDir, filemeta.hashname);
-    return fs.readFileSync(savedFilePath, "binary");
+    const extName = filename.split(".")[1];
+    const savedFilePath = path.join(
+      this.uploadDir,
+      `${filemeta.hashname}.${extName}`,
+    );
+    return {
+      content: fs.readFileSync(savedFilePath),
+      mimeType: filemeta.mimeType,
+    };
   }
 }
 

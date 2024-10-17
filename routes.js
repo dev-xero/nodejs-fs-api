@@ -116,9 +116,10 @@ const routes = {
     }
 
     try {
-      const fileContent = fileManagementService.getFileFromName(filename);
-      res.writeHead(200, { "Content-Type": "application/octet-stream" });
-      res.end(fileContent);
+      const { content, mimeType } =
+        fileManagementService.getFileFromName(filename);
+      res.writeHead(200, { "Content-Type": mimeType });
+      res.end(content);
     } catch (error) {
       console.error("[x] File could not be read, err:", error);
       res.writeHead(404, { "Content-Type": "application/json" });
