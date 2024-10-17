@@ -67,7 +67,7 @@ const routes = {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            message: "File uploaded.",
+            message: "File uploaded successfully.",
             code: 200,
             success: true,
           }),
