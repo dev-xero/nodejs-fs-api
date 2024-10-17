@@ -54,8 +54,8 @@ const routes = {
 
     req.on('end', () => {
       const parts = body.split(`--${boundary}`);
-      // fileManagementService.upload(parts)
-    }
+      fileManagementService.upload(parts)
+    })
 
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
