@@ -4,6 +4,49 @@ const fs = require("fs");
 class FileManagementService {
   constructor() {}
 
+  // Handles upadting the metadata registry
+  updateMetadata(filename, mimeType, fileSize) {
+    const metadataFilePath = path.join(__dirname, "metadata.json");
+    let metadataArray = [];
+
+    try {
+      if (fs.existsSync(metadataFilePath)) {
+        const existingMetadata = fs.readFileSync(metadataFilePath, "utf8");
+        metadataArray = JSON.parse(existingMetadata);
+      }
+    } catch (error) {
+      console.error("[x] Error reading metadata.json file:", error);
+    }
+
+    metadataArray.push({
+      filename,
+      mimeType,
+      fileSize,
+      uploadedAt: new Date().toISOString(),
+    });
+
+    // Attempt to write this entry
+    try {
+      fs.writeFileSync(
+        metadataFilePath,
+        JSON.stringify(metadataArray, null, 2),
+      );
+      console.log("[+] Metadata updated successfully.");
+    } catch (error) {
+      console.error("[x] Error writing metadata.json file:", error);
+    }
+  }
+
+  // Creates the uploads directory if it doesn't exist
+  prepareToUpload() {
+    const uploadDir = path.join(__dirname, "uploaded");
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+  }
+
+  // Parses multipart form data and writes the file after updating metadata
   uploadFile(parts) {
     parts.forEach((part) => {
       if (part.includes("Content-Disposition")) {
@@ -21,39 +64,20 @@ class FileManagementService {
 
         // TODO: Encrypt file names using crypto
         if (filename) {
-          console.log("File Uploaded:");
-          console.log("- [+] File Name:", filename);
-          console.log("- [+] MIME Type:", mimeType);
-          console.log("- [+] File Size:", fileSize, "bytes");
+          console.log("File Metadata:");
+          console.log("\t[-] File Name:", filename);
+          console.log("\t[-] MIME Type:", mimeType);
+          console.log("\t[-] File Size:", fileSize, "bytes");
 
           // Update metadata registry
-          const metadataFilePath = path.join(__dirname, "metadata.json");
-          let metadataArray = [];
+          this.updateMetadata(filename, mimeType, fileSize);
 
-          try {
-            if (fs.existsSync(metadataFilePath)) {
-              const existingMetadata = fs.readFileSync(metadataFilePath, "utf8");
-              metadataArray = JSON.parse(existingMetadata);
-            }
-          } catch (error) {
-            console.error("[x] Error reading metadata.json file:", error);
-          }
+          this.prepareToUpload();
 
-          metadataArray.push({
-            filename,
-            mimeType,
-            fileSize,
-            uploadedAt: new Date().toISOString()
-          });
-
-          // Attempt to write this entry
-          try {
-            fs.writeFileSync(metadataFilePath, JSON.stringify(metadataArray, null, 2));
-            console.log("[+] Metadata updated successfully!");
-
-          } catch (error) {
-            console.error("[x] Error writing metadata.json file:", error);
-          }
+          // Write this file to the uploads directory
+          const filepath = path.join(__dirname, "uploaded", filename);
+          fs.writeFileSync(filepath, fileData, "binary");
+          console.log("[+] File uploaded successfully.");
         }
       }
     });
