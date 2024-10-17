@@ -16,7 +16,7 @@ const routes = {
     );
   },
   "/upload": (req, res) => {
-    if (!res.method == "POST") {
+    if (req.method != "POST") {
       res.writeHead(405, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
