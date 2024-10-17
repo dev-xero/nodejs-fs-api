@@ -19,11 +19,11 @@ This repository contains source code for the NitHub file management server proje
   - Implement an HTTP endpoint (e.g., `/files/:filename/metadata`) that returns the stored metadata of a file.
   - Return details like original file name, size, and upload timestamp.
 
-### 4. File Deletion:
+### 4. File Deletion
   - Implement an HTTP endpoint (e.g., `/files/:filename/delete`) to delete a file from the system.
   - Ensure the file and its metadata are deleted properly.
 
-### 5. List Files:
+### 5. List Files
   - Implement an HTTP endpoint (e.g., `/files`) to return a list of all uploaded files with their metadata.
   - Use the `fs.readdir` method to get the list of files in the directory.
 
