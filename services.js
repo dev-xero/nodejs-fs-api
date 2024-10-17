@@ -1,11 +1,21 @@
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
-const metadata = require("./metadata.json");
 
 class FileManagementService {
   constructor() {
     this.uploadDir = path.join(__dirname, "uploaded");
+    this.metadataFilePath = path.join(__dirname, "metadata.json");
+  }
+
+  makeUrlFriendly(filename) {
+    return filename
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-\.]/g, "")
+      .replace(/--+/g, "-")
+      .replace(/\.+/g, ".");
   }
 
   // Hashes file name and returns a hexadecimal string
@@ -77,10 +87,11 @@ class FileManagementService {
         console.log("\t[-] MIME Type:", mimeType);
         console.log("\t[-] File Size:", fileSize, "bytes");
 
-        const filenameHash = this.hashFilename(filename); // the same file name will produce the same hash
-        const extName = filename.split(".")[1];
+        const safeFilename = this.makeUrlFriendly(filename);
+        const filenameHash = this.hashFilename(safeFilename); // the same file name will produce the same hash
+        const extName = safeFilename.split(".")[1];
 
-        this.updateMetadata(filename, filenameHash, mimeType, fileSize);
+        this.updateMetadata(safeFilename, filenameHash, mimeType, fileSize);
 
         const filepath = path.join(
           this.uploadDir,
@@ -89,13 +100,14 @@ class FileManagementService {
 
         fs.writeFileSync(filepath, fileContent, "binary");
         console.log("[+] File uploaded successfully.");
-        return { filename, mimeType, fileSize };
+        return { safeFilename, mimeType, fileSize };
       }
     }
     throw new Error("No file found in the request");
   }
 
   getFileFromName(filename) {
+    const metadata = JSON.parse(fs.readFileSync(this.metadataFilePath, "utf8"));
     const filemeta = metadata.find((file) => file.filename == filename);
     if (!filemeta) {
       throw new Error("This file does not exist.");
@@ -109,6 +121,15 @@ class FileManagementService {
       content: fs.readFileSync(savedFilePath),
       mimeType: filemeta.mimeType,
     };
+  }
+
+  getAllFiles() {
+    const metadata = JSON.parse(fs.readFileSync(this.metadataFilePath, "utf8"));
+    const filepaths = [];
+    for (const filemeta of metadata) {
+      filepaths.push(`http://localhost:8080/files/${filemeta.filename}`);
+    }
+    return filepaths;
   }
 }
 

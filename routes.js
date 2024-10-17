@@ -89,15 +89,28 @@ const routes = {
     });
   },
   "/files": (req, res) => {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({
-        message: "Successfully read all files.",
-        code: 200,
-        success: true,
-        files: [],
-      }),
-    );
+    try {
+      const files = fileManagementService.getAllFiles();
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "Successfully read all files.",
+          code: 200,
+          success: true,
+          files,
+        }),
+      );
+    } catch (error) {
+      console.error("[x] Error reading files, err:", error);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "No files uploaded or metadata registry is not available.",
+          code: 200,
+          success: true,
+        }),
+      );
+    }
   },
   "/files/": (req, res) => {
     const parsedURL = url.parse(req.url, true);
