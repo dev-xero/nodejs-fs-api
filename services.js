@@ -106,6 +106,8 @@ class FileManagementService {
     throw new Error("No file found in the request");
   }
 
+
+  // Returns the file content and mime type if it exists
   getFileFromName(filename) {
     const metadata = JSON.parse(fs.readFileSync(this.metadataFilePath, "utf8"));
     const filemeta = metadata.find((file) => file.filename == filename);
@@ -123,6 +125,7 @@ class FileManagementService {
     };
   }
 
+  // Lists endpoints for all registered files
   getAllFiles() {
     const metadata = JSON.parse(fs.readFileSync(this.metadataFilePath, "utf8"));
     const filepaths = [];
@@ -130,6 +133,16 @@ class FileManagementService {
       filepaths.push(`http://localhost:8080/files/${filemeta.filename}`);
     }
     return filepaths;
+  }
+
+  // Returns file metadata if present
+  getFileMetadata(filename) {
+    const metadata = JSON.parse(fs.readFileSync(this.metadataFilePath, "utf8"));
+    const filemeta = metadata.find((file) => file.filename == filename);
+    if (!filemeta) {
+      throw new Error("This file does not exist.");
+    }
+    return filemeta;
   }
 }
 

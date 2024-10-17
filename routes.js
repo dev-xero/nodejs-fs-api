@@ -114,7 +114,37 @@ const routes = {
   },
   "/files/": (req, res) => {
     const parsedURL = url.parse(req.url, true);
-    const filename = parsedURL.pathname.split("/").pop();
+    // console.log("[*] Path name:", parsedURL.pathname);
+    const urlParts = parsedURL.pathname.split("/");
+
+    if (urlParts.length == 4 && urlParts.pop() == "metadata") {
+      try {
+        const metadata = fileManagementService.getFileMetadata(urlParts.pop())
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            message: "Successfully read metadata.",
+            code: 200,
+            success: true,
+            metadata,
+          }),
+        );
+        return;
+      } catch (error) {
+        console.error("[x] Error reading metadata.json file:", error);
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            message: "File metadata not found.",
+            code: 404,
+            success: false,
+          }),
+        );
+        return;
+      }
+    }
+
+    const filename = urlParts.pop();
 
     if (!filename) {
       res.writeHead(400, { "Content-Type": "application/json" });
