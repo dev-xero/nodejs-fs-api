@@ -1,4 +1,5 @@
 const path = require("path");
+const crypto = require("crypto");
 const fs = require("fs");
 
 class FileManagementService {
@@ -6,8 +7,17 @@ class FileManagementService {
     this.uploadDir = path.join(__dirname, "uploaded");
   }
 
+  // Hashes file name and returns a hexadecimal string
+  hashFilename(filename) {
+    const hash = crypto.createHash("sha256");
+
+    // we need to avoid collisions
+    hash.update(filename + Date.now());
+    return hash.digest("hex");
+  }
+
   // Handles updating the metadata registry
-  updateMetadata(filename, mimeType, fileSize) {
+  updateMetadata(filename, hashname, mimeType, fileSize) {
     const metadataFilePath = path.join(__dirname, "metadata.json");
     let metadataArray = [];
 
@@ -22,6 +32,7 @@ class FileManagementService {
 
     metadataArray.push({
       filename,
+      hashname,
       mimeType,
       fileSize,
       uploadedAt: new Date().toISOString(),
@@ -65,11 +76,16 @@ class FileManagementService {
         console.log("\t[-] MIME Type:", mimeType);
         console.log("\t[-] File Size:", fileSize, "bytes");
 
-        this.updateMetadata(filename, mimeType, fileSize);
+        const filenameHash = this.hashFilename(filename); // the same file name will produce the same hash
+        const extName = filename.split(".")[1];
 
-        // TODO: Hash file names using crypto package
+        this.updateMetadata(filename, filenameHash, mimeType, fileSize);
 
-        const filepath = path.join(this.uploadDir, filename);
+        const filepath = path.join(
+          this.uploadDir,
+          `${filenameHash}.${extName}`,
+        ); // use the hashed filename instead
+
         fs.writeFileSync(filepath, fileContent, "binary");
         console.log("[+] File uploaded successfully.");
         return { filename, mimeType, fileSize };
