@@ -1,6 +1,7 @@
-const FileManagementService = require("./services");
+const url = require("url");
 const { parseBoundary, parseMultipartFormData } = require("./utils");
 
+const FileManagementService = require("./services");
 const fileManagementService = new FileManagementService();
 
 const routes = {
@@ -91,7 +92,35 @@ const routes = {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
-        message: "All files here.",
+        message: "Successfully read all files.",
+        code: 200,
+        success: true,
+        files: [],
+      }),
+    );
+  },
+  "/files/": (req, res) => {
+    const parsedURL = url.parse(req.url, true);
+    const filename = parsedURL.pathname.split("/").pop();
+
+    if (!filename) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "Bad request, provide a filename.",
+          code: 400,
+          success: true,
+        }),
+      );
+      return;
+    }
+
+    // return a single file
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        message: "Successfully read file from disk.",
+        filename: filename,
         code: 200,
         success: true,
       }),
