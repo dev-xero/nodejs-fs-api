@@ -144,6 +144,25 @@ class FileManagementService {
     }
     return filemeta;
   }
+
+  // Deletes a file from the registry and the file system
+  deleteFile(filename) {
+    const metadata = JSON.parse(fs.readFileSync(this.metadataFilePath, "utf8"));
+    const filemeta = metadata.find((file) => file.filename == filename);
+
+    if (!filemeta) {
+      throw new Error("This file does not exist.");
+    }
+
+    const extName = filename.split(".")[1];
+    const filepath = path.join(this.uploadDir, `${filemeta.hashname}.${extName}`);
+
+    fs.unlinkSync(filepath); // so apparently nodejs calls deletion "unlink"
+    metadata.splice(metadata.indexOf(filemeta), 1);
+    fs.writeFileSync(this.metadataFilePath, JSON.stringify(metadata, null, 2));
+
+    console.log("[+] File deleted successfully.");
+  }
 }
 
 module.exports = FileManagementService;

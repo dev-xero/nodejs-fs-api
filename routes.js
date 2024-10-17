@@ -117,26 +117,92 @@ const routes = {
     // console.log("[*] Path name:", parsedURL.pathname);
     const urlParts = parsedURL.pathname.split("/");
 
-    if (urlParts.length == 4 && urlParts.pop() == "metadata") {
-      try {
-        const metadata = fileManagementService.getFileMetadata(urlParts.pop())
-        res.writeHead(200, { "Content-Type": "application/json" });
+    if (urlParts.length == 4) {
+      const endPart = urlParts.pop();
+
+      if (endPart == "metadata") {
+        try {
+          const metadata = fileManagementService.getFileMetadata(urlParts.pop())
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+             message: "Successfully read metadata.",
+              code: 200,
+              success: true,
+              metadata,
+            }),
+          );
+          return;
+        } catch (error) {
+          console.error("[x] Error reading metadata.json file:", error);
+          res.writeHead(404, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              message: "File metadata not found.",
+              code: 404,
+              success: false,
+            }),
+          );
+          return;
+        }
+      } else if (endPart == "delete") {
+        if (req.method != "DELETE") {
+          res.writeHead(405, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              message: "Method not allowed.",
+              code: 405,
+              success: false,
+            }),
+          );
+          return;
+        }
+
+        try {
+          fileManagementService.deleteFile(urlParts.pop());
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              message: "File deleted successfully.",
+              code: 200,
+              success: true,
+            }),
+          );
+
+          return;
+        } catch (error) {
+          console.error("[x] Error deleting file, err:", error);
+
+          // we could implement custom error classes later, kinda lazy for now
+          if (error.message.toLowerCase().includes("does not exist")) {
+            res.writeHead(404, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                message: "This file does not exist.",
+                code: 404,
+                success: false,
+              }),
+            );
+            return;
+          }
+
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              message: "File could not be deleted.",
+              code: 500,
+              success: false,
+            }),
+          );
+          return;
+        }
+      } else {
+        res.writeHead(400, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            message: "Successfully read metadata.",
-            code: 200,
-            success: true,
-            metadata,
-          }),
-        );
-        return;
-      } catch (error) {
-        console.error("[x] Error reading metadata.json file:", error);
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            message: "File metadata not found.",
-            code: 404,
+            message: "Malformed request, only /metadata and /delete are allowed.",
+            code: 400,
             success: false,
           }),
         );
