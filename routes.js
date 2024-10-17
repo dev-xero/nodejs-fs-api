@@ -1,5 +1,5 @@
 const FileManagementService = require("./services");
-const { parseBoundary } = require("./utils");
+const { parseBoundary, parseMultipartFormData } = require("./utils");
 
 const fileManagementService = new FileManagementService();
 
@@ -28,7 +28,7 @@ const routes = {
     }
 
     const contentType = req.headers["content-type"];
-    if (!contentType.includes("multipart/form-data")) {
+    if (!contentType || !contentType.includes("multipart/form-data")) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
@@ -54,22 +54,24 @@ const routes = {
       return;
     }
 
-    let body = "";
+    let body = []; // byte array
 
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
+    req.on("data", (chunk) => body.push(chunk));
 
     req.on("end", () => {
-      const parts = body.split(`--${boundary}`);
+      bytes = Buffer.concat(body);
+      // console.log("[D] Total body length:", bytes.length);
+      const parts = parseMultipartFormData(bytes, boundary);
+
       try {
-        fileManagementService.uploadFile(parts);
+        fileInfo = fileManagementService.uploadFile(parts);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             message: "File uploaded successfully.",
             code: 200,
             success: true,
+            metadata: fileInfo,
           }),
         );
       } catch (error) {
@@ -82,7 +84,6 @@ const routes = {
             success: false,
           }),
         );
-        return;
       }
     });
   },

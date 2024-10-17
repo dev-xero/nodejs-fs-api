@@ -2,9 +2,11 @@ const path = require("path");
 const fs = require("fs");
 
 class FileManagementService {
-  constructor() {}
+  constructor() {
+    this.uploadDir = path.join(__dirname, "uploaded");
+  }
 
-  // Handles upadting the metadata registry
+  // Handles updating the metadata registry
   updateMetadata(filename, mimeType, fileSize) {
     const metadataFilePath = path.join(__dirname, "metadata.json");
     let metadataArray = [];
@@ -39,48 +41,41 @@ class FileManagementService {
 
   // Creates the uploads directory if it doesn't exist
   prepareToUpload() {
-    const uploadDir = path.join(__dirname, "uploaded");
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(this.uploadDir)) {
+      fs.mkdirSync(this.uploadDir, { recursive: true });
     }
   }
 
   // Parses multipart form data and writes the file after updating metadata
   uploadFile(parts) {
-    parts.forEach((part) => {
-      if (part.includes("Content-Disposition")) {
-        // Extract the file name
-        const fileNameMatch = part.match(/filename="(.+)"/);
-        const filename = fileNameMatch ? fileNameMatch[1].trim() : null;
+    this.prepareToUpload();
 
-        // Extract MIME type
-        const contentTypeMatch = part.match(/Content-Type: (.+)/);
-        const mimeType = contentTypeMatch ? contentTypeMatch[1].trim() : null;
+    // Extract file metadata from content-disposition header
+    for (const part of parts) {
+      const contentDisposition = part.headers["content-disposition"];
+      if (contentDisposition && contentDisposition.includes("filename")) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        const filename = filenameMatch ? filenameMatch[1] : "unknown";
+        const mimeType = part.headers["content-type"];
+        const fileContent = part.content;
+        const fileSize = fileContent.length;
 
-        // Get file data with file size
-        const fileData = part.split("\r\n\r\n")[1].split("\r\n--")[0];
-        const fileSize = Buffer.byteLength(fileData, "binary");
+        console.log("File Metadata:");
+        console.log("\t[-] File Name:", filename);
+        console.log("\t[-] MIME Type:", mimeType);
+        console.log("\t[-] File Size:", fileSize, "bytes");
 
-        // TODO: Encrypt file names using crypto
-        if (filename) {
-          console.log("File Metadata:");
-          console.log("\t[-] File Name:", filename);
-          console.log("\t[-] MIME Type:", mimeType);
-          console.log("\t[-] File Size:", fileSize, "bytes");
+        this.updateMetadata(filename, mimeType, fileSize);
 
-          // Update metadata registry
-          this.updateMetadata(filename, mimeType, fileSize);
+        // TODO: Hash file names using crypto package
 
-          this.prepareToUpload();
-
-          // Write this file to the uploads directory
-          const filepath = path.join(__dirname, "uploaded", filename);
-          fs.writeFileSync(filepath, fileData, "binary");
-          console.log("[+] File uploaded successfully.");
-        }
+        const filepath = path.join(this.uploadDir, filename);
+        fs.writeFileSync(filepath, fileContent, "binary");
+        console.log("[+] File uploaded successfully.");
+        return { filename, mimeType, fileSize };
       }
-    });
+    }
+    throw new Error("No file found in the request");
   }
 }
 
