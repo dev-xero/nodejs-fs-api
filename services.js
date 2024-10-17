@@ -1,6 +1,7 @@
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
+const metadata = require("./metadata.json");
 
 class FileManagementService {
   constructor() {
@@ -92,6 +93,15 @@ class FileManagementService {
       }
     }
     throw new Error("No file found in the request");
+  }
+
+  getFileFromName(filename) {
+    const filemeta = metadata.find((file) => file.filename == filename);
+    if (!filemeta) {
+      throw new Error("This file does not exist.");
+    }
+    const savedFilePath = path.join(this.uploadDir, filemeta.hashname);
+    return fs.readFileSync(savedFilePath, "binary");
   }
 }
 

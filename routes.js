@@ -115,16 +115,21 @@ const routes = {
       return;
     }
 
-    // return a single file
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({
-        message: "Successfully read file from disk.",
-        filename: filename,
-        code: 200,
-        success: true,
-      }),
-    );
+    try {
+      const fileContent = fileManagementService.getFileFromName(filename);
+      res.writeHead(200, { "Content-Type": "application/octet-stream" });
+      res.end(fileContent);
+    } catch (error) {
+      console.error("[x] File could not be read, err:", error);
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          message: "File not found.",
+          code: 404,
+          success: false,
+        }),
+      );
+    }
   },
 };
 
