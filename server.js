@@ -28,13 +28,13 @@ const requestListener = (req, res) => {
     return;
   }
 
+  console.log("[*] Request incoming:", pathname);
+
   // File related requests
   if (pathname.startsWith("/files/")) {
     routes["/files/"](req, res);
     return;
   }
-
-  console.log("[*] Request incoming:", pathname);
 
   const route = routes[pathname] || notFound;
   route(req, res);
