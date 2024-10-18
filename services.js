@@ -100,7 +100,7 @@ class FileManagementService {
 
         fs.writeFileSync(filepath, fileContent, "binary");
         console.log("[+] File uploaded successfully.");
-        return { safeFilename, mimeType, fileSize };
+        return { filename: safeFilename, mimeType, fileSize };
       }
     }
     throw new Error("No file found in the request");
