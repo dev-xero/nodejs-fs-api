@@ -33,7 +33,9 @@ class FileManagementService {
         try {
             await fs.access(this.metadataFilePath);
             const data = await fs.readFile(this.metadataFilePath, 'utf-8');
-            return JSON.parse(data);
+            const parsedData = JSON.parse(data);
+
+            return Object.keys(parsedData).length != 0 ? parsedData : [];
         } catch (error) {
             if (error.code == 'ENOENT') {
                 return []; // just create a new array
@@ -48,6 +50,7 @@ class FileManagementService {
     async updateMetadata(filename, hashname, mimeType, fileSize) {
         try {
             const metadataArray = await this.readMetadata();
+
             metadataArray.push({
                 filename,
                 hashname,
@@ -57,7 +60,7 @@ class FileManagementService {
             });
             await fs.writeFile(
                 this.metadataFilePath,
-                JSON.stringify(metadataArray)
+                JSON.stringify(metadataArray, null, 2)
             );
             console.log('[+] Metadata updated successfully.');
         } catch (error) {
@@ -136,22 +139,26 @@ class FileManagementService {
     }
 
     // Returns the file content and mime type if it exists
-    getFileFromName(filename) {
-        const metadata = JSON.parse(
-            fs.readFileSync(this.metadataFilePath, 'utf8')
-        );
-        const filemeta = metadata.find((file) => file.filename == filename);
-        if (!filemeta) {
+    async getFileFromName(filename) {
+        const metadata = await this.readMetadata();
+        const fileMeta = metadata.find((file) => file.filename == filename);
+
+        if (!fileMeta) {
             throw new Error('This file does not exist.');
         }
+
         const extName = filename.split('.')[1];
         const savedFilePath = path.join(
             this.uploadDir,
-            `${filemeta.hashname}.${extName}`
+            `${fileMeta.hashname}.${extName}`
         );
+
+        const content = await fs.readFile(savedFilePath);
+        console.log("[+] Successfully served file:", `${fileMeta.hashname}.${extName}`)
+
         return {
-            content: fs.readFileSync(savedFilePath),
-            mimeType: filemeta.mimeType,
+            content,
+            mimeType: fileMeta.mimeType,
         };
     }
 
