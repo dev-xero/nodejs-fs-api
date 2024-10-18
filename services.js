@@ -179,15 +179,16 @@ class FileManagementService {
     }
 
     // Returns file metadata if present
-    getFileMetadata(filename) {
-        const metadata = JSON.parse(
-            fs.readFileSync(this.metadataFilePath, 'utf8')
-        );
-        const filemeta = metadata.find((file) => file.filename == filename);
-        if (!filemeta) {
+    async getFileMetadata(filename) {
+        const metadata = await this.readMetadata();
+        const fileMeta = metadata.find((file) => file.filename == filename);
+        
+        if (!fileMeta) {
             throw new Error('This file does not exist.');
         }
-        return filemeta;
+
+        console.log("[+] Successfully served file metadata.");
+        return fileMeta;
     }
 
     // Deletes a file from the registry and the file system

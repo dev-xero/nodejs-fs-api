@@ -124,9 +124,10 @@ const routes = {
 
             if (endPart == 'metadata') {
                 try {
-                    const metadata = fileManagementService.getFileMetadata(
-                        urlParts.pop()
-                    );
+                    const metadata =
+                        await fileManagementService.getFileMetadata(
+                            urlParts.pop()
+                        );
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(
                         JSON.stringify({
