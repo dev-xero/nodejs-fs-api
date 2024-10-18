@@ -89,9 +89,9 @@ const routes = {
             }
         });
     },
-    '/files': (req, res) => {
+    '/files': async (req, res) => {
         try {
-            const files = fileManagementService.getAllFiles();
+            const files = await fileManagementService.getAllFiles();
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(
                 JSON.stringify({
@@ -236,6 +236,7 @@ const routes = {
             return;
         }
 
+        // serve a specific file
         try {
             const { content, mimeType } =
                 await fileManagementService.getFileFromName(filename);

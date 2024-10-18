@@ -154,7 +154,10 @@ class FileManagementService {
         );
 
         const content = await fs.readFile(savedFilePath);
-        console.log("[+] Successfully served file:", `${fileMeta.hashname}.${extName}`)
+        console.log(
+            '[+] Successfully served file:',
+            `${fileMeta.hashname}.${extName}`
+        );
 
         return {
             content,
@@ -163,14 +166,15 @@ class FileManagementService {
     }
 
     // Lists endpoints for all registered files
-    getAllFiles() {
-        const metadata = JSON.parse(
-            fs.readFileSync(this.metadataFilePath, 'utf8')
-        );
+    async getAllFiles() {
+        const metadata = await this.readMetadata();
         const filepaths = [];
-        for (const filemeta of metadata) {
-            filepaths.push(`http://localhost:8080/files/${filemeta.filename}`);
+
+        for (const fileMeta of metadata) {
+            filepaths.push(`http://localhost:8080/files/${fileMeta.filename}`);
         }
+
+        console.log('[+] Successfully served all files.');
         return filepaths;
     }
 
