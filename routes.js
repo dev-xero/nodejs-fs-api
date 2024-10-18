@@ -15,7 +15,7 @@ const routes = {
       }),
     );
   },
-  "/upload": (req, res) => {
+  "/upload": async (req, res) => {
     if (req.method != "POST") {
       res.writeHead(405, { "Content-Type": "application/json" });
       res.end(
@@ -59,13 +59,13 @@ const routes = {
 
     req.on("data", (chunk) => body.push(chunk));
 
-    req.on("end", () => {
+    req.on("end", async () => {
       bytes = Buffer.concat(body);
       // console.log("[D] Total body length:", bytes.length);
       const parts = parseMultipartFormData(bytes, boundary);
 
       try {
-        fileInfo = fileManagementService.uploadFile(parts);
+        fileInfo = await fileManagementService.uploadFile(parts);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
@@ -122,11 +122,13 @@ const routes = {
 
       if (endPart == "metadata") {
         try {
-          const metadata = fileManagementService.getFileMetadata(urlParts.pop())
+          const metadata = fileManagementService.getFileMetadata(
+            urlParts.pop(),
+          );
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(
             JSON.stringify({
-             message: "Successfully read metadata.",
+              message: "Successfully read metadata.",
               code: 200,
               success: true,
               metadata,
@@ -201,7 +203,8 @@ const routes = {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            message: "Malformed request, only /metadata and /delete are allowed.",
+            message:
+              "Malformed request, only /metadata and /delete are allowed.",
             code: 400,
             success: false,
           }),
