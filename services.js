@@ -182,40 +182,44 @@ class FileManagementService {
     async getFileMetadata(filename) {
         const metadata = await this.readMetadata();
         const fileMeta = metadata.find((file) => file.filename == filename);
-        
+
         if (!fileMeta) {
             throw new Error('This file does not exist.');
         }
 
-        console.log("[+] Successfully served file metadata.");
+        console.log('[+] Successfully served file metadata.');
         return fileMeta;
     }
 
     // Deletes a file from the registry and the file system
-    deleteFile(filename) {
-        const metadata = JSON.parse(
-            fs.readFileSync(this.metadataFilePath, 'utf8')
-        );
-        const filemeta = metadata.find((file) => file.filename == filename);
+    async deleteFile(filename) {
+        const metadata = await this.readMetadata();
+        const fileMeta = metadata.find((file) => file.filename == filename);
 
-        if (!filemeta) {
+        if (!fileMeta) {
             throw new Error('This file does not exist.');
         }
 
         const extName = filename.split('.')[1];
         const filepath = path.join(
             this.uploadDir,
-            `${filemeta.hashname}.${extName}`
+            `${fileMeta.hashname}.${extName}`
         );
 
-        fs.unlinkSync(filepath); // so apparently nodejs calls deletion "unlink"
-        metadata.splice(metadata.indexOf(filemeta), 1);
-        fs.writeFileSync(
-            this.metadataFilePath,
-            JSON.stringify(metadata, null, 2)
-        );
+        try {
+            await fs.unlink(filepath); // so apparently nodejs calls deletion "unlink"
+            metadata.splice(metadata.indexOf(fileMeta), 1);
 
-        console.log('[+] File deleted successfully.');
+            await fs.writeFile(
+                this.metadataFilePath,
+                JSON.stringify(metadata, null, 2)
+            );
+
+            console.log('[+] File deleted successfully.');
+        } catch (error) {
+            console.error('Unable to complete this request:', error);
+            throw error;
+        }
     }
 }
 

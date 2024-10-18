@@ -167,7 +167,7 @@ const routes = {
                 }
 
                 try {
-                    fileManagementService.deleteFile(urlParts.pop());
+                    await fileManagementService.deleteFile(urlParts.pop());
 
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(
